@@ -1,0 +1,547 @@
+;; Verified public-register citations for the legal entity archived by this repository.
+;;
+;; Every row is checked live by tools/verify_citations.cljs:
+;;   * GET :cite/url must answer HTTP 2xx
+;;   * :cite/expect-substring must appear in the response body
+;;
+;; A URL that cannot be fetched, or whose body no longer carries the claim, is a
+;; DRIFT and fails the gate. Nothing is recorded here that was not retrieved.
+;;
+;; THREE independent authorities are cited, not one:
+;;   * GLEIF, the global LEI system
+;;   * the United States, via the SEC's EDGAR submissions API (Intercontinental
+;;     Exchange, Inc. is a domestic large accelerated filer, ticker ICE on the
+;;     NYSE -- an exchange it owns -- CIK 0001571949)
+;;   * the issuer itself, at its own published website www.ice.com -- the
+;;     terms page this repository archives (80-data/public/tos.journal.edn
+;;     archives https://www.ice.com/terms-of-use, the same URL the issuer-*
+;;     rows cite)
+;;
+;; WHY NO DELAWARE STATE REGISTER IS CITED DIRECTLY. GLEIF names RA000602 -- the
+;; Division of Corporations, Department of State, Delaware -- as BOTH the
+;; register of record and the validation authority for this entity (rows
+;; gleif-registered-at and gleif-validated-at), and the registeredAs 5298907 is
+;; the Delaware corporate file number. Delaware publishes no per-entity GET URL:
+;; the ICIS entity search (icis.corp.delaware.gov) answered 200 to this gate on
+;; 2026-08-22, but only with its search form -- per-entity lookups run behind
+;; POST/session flows and certified extracts are paid. What the catalog does
+;; instead is corroborate the Delaware claims through independent authorities
+;; that do answer on stable URLs: GLEIF says US-DE and legal form XTIQ, the ELF
+;; code for a Delaware Corporation (rows gleif-jurisdiction, gleif-legal-form,
+;; resolved by the gleif-elf-* definition rows) -> the SEC prints
+;; stateOfIncorporation DE (row sec-state-incorp) -> the issuer's own terms
+;; print 'a Delaware corporation' in the sentence naming the owner of the
+;; Website (row issuer-owner-delaware). GLEIF records the file number 5298907
+;; twice (registeredAs and validatedAs) and once more inside the OpenCorporates
+;; id us_de\/5298907 (row gleif-ocid). The SEC and GLEIF never consulted each
+;; other.
+;;
+;; THE NYSE IS VISIBLE FROM ALL THREE AUTHORITIES WITHOUT ANY OF THEM SAYING
+;; 'owns'. GLEIF maps this entity to MIC XNYS -- the Market Identifier Code of
+;; the New York Stock Exchange (row gleif-mic) -- and one of only THREE direct
+;; children GLEIF records for it is the 'Revised Retirement Plan for Eligible
+;; Employees of The New York Stock Exchange and Subsidiary Companies' (row
+;; gleif-child-nyse-plan-name). The SEC records the listing exchange as NYSE
+;; (row sec-exchange): the company lists on the exchange it operates. And the
+;; issuer's own terms define the Website as 'www.ice.com, www.nyse.com,
+;; www.intercontinentalexchange.com' in one breath (row issuer-website-family).
+;; Three URL families, one relationship, no shared source.
+;;
+;; FOUR HONEST WRINKLES, SO A READER DOES NOT MISREAD THEM AS DRIFT:
+;;   1. GLEIF's legal address is C/O UNITED AGENT GROUP INC., 1521 Concord
+;;      Pike, Suite 201, Wilmington DE 19803 -- a registered-agent address,
+;;      though a different agent than the Corporation Trust Center the Nasdaq
+;;      sibling catalog (549300L8X1Q78ERXFD06) records. The operating
+;;      headquarters is 5660 New Northside Drive, Atlanta GA 30328, and HERE
+;;      GLEIF AND THE SEC AGREE TO THE STREET: GLEIF prints '5660 New
+;;      Northside Drive' / '3rd Floor' / 'Atlanta' (rows gleif-hq-address,
+;;      gleif-hq-city) while the SEC prints '5660 NEW NORTHSIDE DRIVE,' (with
+;;      a trailing comma) / 'THIRD FLOOR' / 'ATLANTA' (rows sec-street,
+;;      sec-street2, sec-city). Same fact, per-source spellings; each row
+;;      matches its own source's bytes.
+;;   2. The SEC submissions record carries "lei":null (row sec-lei-null): the
+;;      SEC does NOT corroborate the LEI string itself. The GLEIF<->SEC join in
+;;      this catalog rests on legal name + Delaware incorporation + the shared
+;;      Atlanta street address + ticker (rows sec-name, sec-state-incorp,
+;;      sec-street, sec-ticker), not a shared identifier.
+;;   3. The SEC record prints "ein":"000000000" -- an all-zeros placeholder
+;;      (row sec-ein-zeros). It is recorded because it is checked and true of
+;;      the source; it identifies and corroborates nothing. The Nasdaq sibling
+;;      cites a real EIN; this registrant's EDGAR record simply carries none.
+;;   4. GLEIF prints the legal name upper-case (INTERCONTINENTAL EXCHANGE,
+;;      INC.); the SEC prints 'Intercontinental Exchange, Inc.'. Case
+;;      conventions per source, not two names.
+;;
+;; ONE STRUCTURAL FACT WORTH READING TWICE: the entity on this record was
+;; created 2013-03-06 (row gleif-creation-date), and the SEC knew this same
+;; CIK as 'IntercontinentalExchange Group, Inc.' from 2013-03-20 until
+;; 2014-05-29 (row sec-former-name). The record is the holding company built
+;; in 2013 for the NYSE Euronext acquisition -- not the 2000 Atlanta startup
+;; whose name it now bears. The LEI followed on 2013-12-10 (row
+;; gleif-initial-registration), while the SEC still carried the Group name.
+;; Today the LEI is managed by Bloomberg Finance L.P., marketing name
+;; 'Bloomberg' (rows gleif-managing-lou, gleif-lou-*) -- an external LOU,
+;; where the Nasdaq sibling's LEI is managed by its own consolidated
+;; subsidiary. The catalog cites what GLEIF answers today and claims nothing
+;; about earlier managing LOUs.
+;;
+;; WHAT IS DELIBERATELY NOT CITED. GLEIF's nextRenewalDate and lastUpdateDate
+;; move by construction; a row on either would go red on schedule while saying
+;; nothing about the entity. The GLEIF ISIN mapping for this serial note
+;; issuer moves by construction too; no per-ISIN row and no count row is
+;; wanted. The issuer's page title '<title>Terms of Use</title>' names no
+;; company, so it is cited as :attribute, not :identity. The children-count
+;; row goes red when GLEIF adds or removes a relationship; that is correct
+;; DRIFT, not a false alarm.
+;;
+;; :cite/row-kind is the honest part of this catalog and should be read before
+;; the claims:
+;;
+;;   :identity   the substring names this entity, its identifiers, or a specific
+;;               related legal entity (the CIK, the BIC, the MIC, the file
+;;               number, the OpenCorporates id, the S&P id, the named direct
+;;               children, the former name). Point the URL at a different
+;;               company and the row fails.
+;;   :attribute  the substring is TRUE OF THIS ENTITY BUT NOT ONLY OF IT (status
+;;               ACTIVE, jurisdiction US-DE, SIC 6200, fiscal year 1231, the
+;;               generic page title). Such a row can survive a swap to a
+;;               similar company. It is recorded because it is checked and
+;;               true, not because it identifies.
+;;   :definition the row resolves a code used by another row (RA000602, ELF
+;;               XTIQ, the managing LOU). It says the named register, legal
+;;               form or LEI issuer exists; it says nothing about
+;;               Intercontinental Exchange, Inc. except through the rows that
+;;               reference it.
+;;
+;; Of the entries below, 22 are :identity, 33 are :attribute and 11 are
+;; :definition. A reader who treats all 66 as identifying would overstate what
+;; this catalog proves -- which is the error this field exists to prevent.
+;;
+;; Substrings are taken from the RAW response body and were each checked against
+;; the fetched bytes before this file was written (2026-08-22, GLEIF golden copy
+;; of 2026-08-21). GLEIF escapes URL slashes in its JSON (us_de\/5298907,
+;; C\/O UNITED AGENT GROUP INC., https:\/\/corp.delaware.gov\/); the ocid,
+;; address, ra-website and lou-website rows match that raw escaped form
+;; deliberately.
+{:catalog/subject
+ #:company{:legal-name "INTERCONTINENTAL EXCHANGE, INC."
+           :lei "5493000F4ZO33MV32P92"
+           :jurisdiction "US-DE"
+           :registered-at "RA000602"
+           :registered-as "5298907"
+           :legal-form "XTIQ"
+           :website "https://www.ice.com"}
+ :catalog/authorities
+ [{:authority/id :gleif
+   :authority/name "Global Legal Entity Identifier Foundation"
+   :authority/root "https://api.gleif.org/"}
+  {:authority/id :us-sec
+   :authority/name "U.S. Securities and Exchange Commission, EDGAR"
+   :authority/root "https://data.sec.gov/"}
+  {:authority/id :issuer
+   :authority/name "Intercontinental Exchange, Inc., at its own published website"
+   :authority/root "https://www.ice.com/"}]
+ :catalog/unreachable
+ [{:unreachable/authority "Division of Corporations, Department of State, Delaware (RA000602, register of record)"
+   :unreachable/url "https://icis.corp.delaware.gov/ecorp/entitysearch/NameSearch.aspx"
+   :unreachable/observed "search form answers HTTP 200 (2026-08-22) but per-entity lookups run behind POST/session flows and certified extracts are paid; no per-entity GET URL"
+   :unreachable/consequence "The register GLEIF names as this entity's register of record and validation authority is NOT cited below. The file number 5298907 rests on GLEIF (rows gleif-registered-as, gleif-validated-as, gleif-ocid) plus the SEC's independent DE incorporation record (row sec-state-incorp) and the issuer's own printed 'a Delaware corporation' (row issuer-owner-delaware)."}]
+ :catalog/entries
+ [
+  {:cite/id "gleif-lei"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"lei\":\"5493000F4ZO33MV32P92\""
+   :cite/claim "GLEIF issues LEI 5493000F4ZO33MV32P92."}
+  {:cite/id "gleif-legal-name"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"legalName\":{\"name\":\"INTERCONTINENTAL EXCHANGE, INC.\",\"language\":\"en\"}"
+   :cite/claim "The legal name on that LEI is INTERCONTINENTAL EXCHANGE, INC., recorded in English. Corroborated independently by sec-name (which prints it in mixed case -- see header wrinkle 4)."}
+  {:cite/id "gleif-address"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"addressLines\":[\"C\\/O UNITED AGENT GROUP INC.\",\"1521 CONCORD PIKE\",\"SUITE 201\"]"
+   :cite/claim "The legal seat is care of United Agent Group Inc., 1521 Concord Pike, Suite 201 -- a Delaware registered-agent address, not the operating headquarters (see header wrinkle 1). Raw escaped form (C\\/O) matched deliberately."}
+  {:cite/id "gleif-city"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"city\":\"WILMINGTON\""
+   :cite/claim "The legal seat city is Wilmington, Delaware -- not Atlanta (see header wrinkle 1)."}
+  {:cite/id "gleif-region"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"region\":\"US-DE\""
+   :cite/claim "The legal seat region is US-DE, Delaware."}
+  {:cite/id "gleif-postal"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"postalCode\":\"19803\""
+   :cite/claim "The legal seat postal code is 19803 (Wilmington)."}
+  {:cite/id "gleif-hq-address"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"headquartersAddress\":{\"language\":\"en\",\"addressLines\":[\"5660 New Northside Drive\",\"3rd Floor\"]"
+   :cite/claim "The headquarters is 5660 New Northside Drive, 3rd Floor -- the same street the SEC prints as the business address in its own spelling (rows sec-street, sec-street2; see header wrinkle 1)."}
+  {:cite/id "gleif-hq-city"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"city\":\"Atlanta\""
+   :cite/claim "The headquarters city is Atlanta, Georgia (the SEC prints ATLANTA -- row sec-city)."}
+  {:cite/id "gleif-registered-at"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"registeredAt\":{\"id\":\"RA000602\""
+   :cite/claim "The register of record is RA000602. Resolved by the gleif-ra-* definition rows; NOT directly citable (see :catalog/unreachable)."}
+  {:cite/id "gleif-registered-as"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"registeredAs\":\"5298907\""
+   :cite/claim "The register of record carries this entity as file number 5298907 -- the Delaware corporate file number, repeated inside the OpenCorporates id (row gleif-ocid)."}
+  {:cite/id "gleif-validated-at"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"validatedAt\":{\"id\":\"RA000602\""
+   :cite/claim "The validation authority is the same register, RA000602."}
+  {:cite/id "gleif-validated-as"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"validatedAs\":\"5298907\""
+   :cite/claim "The LOU validated the registration against the same file number, not a different one."}
+  {:cite/id "gleif-jurisdiction"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"jurisdiction\":\"US-DE\""
+   :cite/claim "The jurisdiction is the State of Delaware, United States. Corroborated independently by sec-state-incorp and by the issuer's own 'a Delaware corporation' (row issuer-owner-delaware)."}
+  {:cite/id "gleif-legal-form"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"legalForm\":{\"id\":\"XTIQ\""
+   :cite/claim "The entity legal form is ELF code XTIQ. Resolved by the gleif-elf-* definition rows to Corporation (Delaware)."}
+  {:cite/id "gleif-category"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"category\":\"GENERAL\""
+   :cite/claim "The LEI entity category is GENERAL (not BRANCH, FUND or SOLE_PROPRIETOR) -- this record is the parent legal entity itself."}
+  {:cite/id "gleif-status-active"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"status\":\"ACTIVE\""
+   :cite/claim "The entity status is ACTIVE."}
+  {:cite/id "gleif-reg-status-issued"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"status\":\"ISSUED\""
+   :cite/claim "The LEI registration status is ISSUED (also matches the entity ACTIVE row; both are checked)."}
+  {:cite/id "gleif-corroboration"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"corroborationLevel\":\"FULLY_CORROBORATED\""
+   :cite/claim "The record is FULLY_CORROBORATED -- GLEIF states the register of record confirmed the data. The catalog records what GLEIF says, not more."}
+  {:cite/id "gleif-creation-date"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"creationDate\":\"2013-03-06T00:00:00Z\""
+   :cite/claim "The entity creation date on record is 2013-03-06 -- the 2013 holding company, not the 2000 Atlanta predecessor (see header structural fact and row sec-former-name)."}
+  {:cite/id "gleif-initial-registration"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"initialRegistrationDate\":\"2013-12-10T03:07:00Z\""
+   :cite/claim "The LEI was first registered 2013-12-10, nine months after the entity was created, while the SEC still carried the Group former name (row sec-former-name)."}
+  {:cite/id "gleif-managing-lou"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"managingLou\":\"5493001KJTIIGC8Y1R12\""
+   :cite/claim "The managing LOU is 5493001KJTIIGC8Y1R12. Resolved by the gleif-lou-* definition rows to Bloomberg Finance L.P. -- an external LOU (see header structural fact)."}
+  {:cite/id "gleif-bic"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"bic\":[\"INXCUS33XXX\"]"
+   :cite/claim "GLEIF maps this entity to BIC INXCUS33XXX."}
+  {:cite/id "gleif-mic"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"mic\":[\"XNYS\"]"
+   :cite/claim "GLEIF maps this entity to MIC XNYS -- the New York Stock Exchange, the exchange this entity operates and lists itself on (row sec-exchange; see the header NYSE fact)."}
+  {:cite/id "gleif-ocid"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"ocid\":\"us_de\\/5298907\""
+   :cite/claim "The OpenCorporates id us_de/5298907 repeats the Delaware file number under the us_de register prefix. Raw escaped form matched deliberately."}
+  {:cite/id "gleif-spglobal"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"spglobal\":[\"1081952\"]"
+   :cite/claim "The S&P Global company id on record is 1081952."}
+  {:cite/id "gleif-conformity"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"conformityFlag\":\"CONFORMING\""
+   :cite/claim "The record's conformity flag is CONFORMING."}
+  {:cite/id "gleif-expiration-null"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92"
+   :cite/expect-substring "\"expiration\":{\"date\":null,\"reason\":null}"
+   :cite/claim "No expiration date or reason is recorded -- the entity has not been merged, dissolved or otherwise retired."}
+  {:cite/id "gleif-children-count"
+   :cite/authority :gleif
+   :cite/row-kind :attribute
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92/direct-child-relationships"
+   :cite/expect-substring "\"total\":3"
+   :cite/claim "GLEIF records 3 direct child relationships. This row goes red when GLEIF adds or removes one; that is correct DRIFT, not a false alarm."}
+  {:cite/id "gleif-child-iba"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92/direct-child-relationships"
+   :cite/expect-substring "\"startNode\":{\"id\":\"2138004J1O2ULCG2XR37\""
+   :cite/claim "ICE Benchmark Administration Limited (2138004J1O2ULCG2XR37) is one of the direct children (named by row gleif-child-iba-name)."}
+  {:cite/id "gleif-child-endnode"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92/direct-child-relationships"
+   :cite/expect-substring "\"endNode\":{\"id\":\"5493000F4ZO33MV32P92\""
+   :cite/claim "The child relationships point at THIS entity as the consolidating parent (IS_DIRECTLY_CONSOLIDATED_BY end node)."}
+  {:cite/id "gleif-child-holdings-name"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92/direct-children"
+   :cite/expect-substring "\"name\":\"INTERCONTINENTAL EXCHANGE HOLDINGS, INC.\""
+   :cite/claim "One direct child is INTERCONTINENTAL EXCHANGE HOLDINGS, INC., the intermediate holding company."}
+  {:cite/id "gleif-child-iba-name"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92/direct-children"
+   :cite/expect-substring "\"name\":\"ICE BENCHMARK ADMINISTRATION LIMITED\""
+   :cite/claim "One direct child is ICE BENCHMARK ADMINISTRATION LIMITED, the UK benchmark administrator."}
+  {:cite/id "gleif-child-nyse-plan-name"
+   :cite/authority :gleif
+   :cite/row-kind :identity
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92/direct-children"
+   :cite/expect-substring "\"name\":\"Revised Retirement Plan for Eligible Employees of The New York Stock Exchange and Subsidiary Companies\""
+   :cite/claim "One direct child is the NYSE employees' retirement plan -- the New York Stock Exchange relationship, visible in GLEIF's own graph (see the header NYSE fact)."}
+  {:cite/id "gleif-ra-code"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000602"
+   :cite/expect-substring "\"code\":\"RA000602\""
+   :cite/claim "RA000602 exists in the GLEIF Registration Authorities list. Says nothing about Intercontinental Exchange; resolves rows gleif-registered-at and gleif-validated-at."}
+  {:cite/id "gleif-ra-name"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000602"
+   :cite/expect-substring "\"internationalOrganizationName\":\"Division of Corporations, Department of State\""
+   :cite/claim "RA000602 is the Division of Corporations, Department of State."}
+  {:cite/id "gleif-ra-website"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000602"
+   :cite/expect-substring "\"website\":\"https:\\/\\/corp.delaware.gov\\/\""
+   :cite/claim "RA000602's website is corp.delaware.gov. Raw escaped form matched deliberately."}
+  {:cite/id "gleif-ra-jurisdiction"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/registration-authorities/RA000602"
+   :cite/expect-substring "\"jurisdiction\":\"Delaware\""
+   :cite/claim "RA000602's jurisdiction is Delaware, United States of America."}
+  {:cite/id "gleif-elf-code"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/XTIQ"
+   :cite/expect-substring "\"code\":\"XTIQ\""
+   :cite/claim "ELF code XTIQ exists in the GLEIF Entity Legal Forms list. Resolves row gleif-legal-form."}
+  {:cite/id "gleif-elf-name"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/XTIQ"
+   :cite/expect-substring "\"localName\":\"Corporation\""
+   :cite/claim "XTIQ names the legal form Corporation."}
+  {:cite/id "gleif-elf-jurisdiction"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/entity-legal-forms/XTIQ"
+   :cite/expect-substring "\"subdivisionCode\":\"US-DE\""
+   :cite/claim "XTIQ is the Delaware (US-DE) form of Corporation -- the ELF code itself is jurisdiction-scoped, so it corroborates the Delaware rows structurally."}
+  {:cite/id "gleif-lou-lei"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92/lei-issuer"
+   :cite/expect-substring "\"lei\":\"5493001KJTIIGC8Y1R12\""
+   :cite/claim "The LEI issuer for this record is 5493001KJTIIGC8Y1R12. Resolves row gleif-managing-lou."}
+  {:cite/id "gleif-lou-name"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92/lei-issuer"
+   :cite/expect-substring "\"name\":\"Bloomberg Finance L.P.\""
+   :cite/claim "That LOU is Bloomberg Finance L.P. -- an external LOU, not a subsidiary (see header structural fact)."}
+  {:cite/id "gleif-lou-marketing"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92/lei-issuer"
+   :cite/expect-substring "\"marketingName\":\"Bloomberg\""
+   :cite/claim "GLEIF accredits that LOU under the marketing name Bloomberg."}
+  {:cite/id "gleif-lou-website"
+   :cite/authority :gleif
+   :cite/row-kind :definition
+   :cite/url "https://api.gleif.org/api/v1/lei-records/5493000F4ZO33MV32P92/lei-issuer"
+   :cite/expect-substring "\"website\":\"http:\\/\\/lei.bloomberg.com\""
+   :cite/claim "That LOU's website is lei.bloomberg.com. Raw escaped form matched deliberately."}
+  {:cite/id "sec-cik"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"cik\":\"0001571949\""
+   :cite/claim "The SEC carries this registrant as CIK 0001571949."}
+  {:cite/id "sec-name"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"name\":\"Intercontinental Exchange, Inc.\""
+   :cite/claim "The SEC registrant name is Intercontinental Exchange, Inc. -- the same name GLEIF prints upper-case (row gleif-legal-name; see header wrinkle 4). The SEC and GLEIF never consulted each other."}
+  {:cite/id "sec-former-name"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "{\"name\":\"IntercontinentalExchange Group, Inc.\",\"from\":\"2013-03-20T00:00:00.000Z\",\"to\":\"2014-05-29T00:00:00.000Z\"}"
+   :cite/claim "The SEC records this registrant's former name IntercontinentalExchange Group, Inc. (2013-03-20 to 2014-05-29) -- the 2013 holding company built for the NYSE Euronext acquisition (see header structural fact and row gleif-creation-date)."}
+  {:cite/id "sec-ticker"
+   :cite/authority :us-sec
+   :cite/row-kind :identity
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"tickers\":[\"ICE\"]"
+   :cite/claim "The SEC records the ticker ICE."}
+  {:cite/id "sec-exchange"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"exchanges\":[\"NYSE\"]"
+   :cite/claim "The listing exchange is the NYSE -- the company lists on the exchange it operates (row gleif-mic; see the header NYSE fact)."}
+  {:cite/id "sec-sic"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"sic\":\"6200\""
+   :cite/claim "The SIC code is 6200 -- the same industry code the SEC assigns the Nasdaq sibling catalog's subject."}
+  {:cite/id "sec-sic-desc"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"sicDescription\":\"Security & Commodity Brokers, Dealers, Exchanges & Services\""
+   :cite/claim "SIC 6200 is Security & Commodity Brokers, Dealers, Exchanges & Services."}
+  {:cite/id "sec-state-incorp"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"stateOfIncorporation\":\"DE\""
+   :cite/claim "The SEC independently records Delaware incorporation -- the second authority behind the Delaware claims (see header; corroborates gleif-jurisdiction and issuer-owner-delaware)."}
+  {:cite/id "sec-fiscal-year"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"fiscalYearEnd\":\"1231\""
+   :cite/claim "The fiscal year ends December 31."}
+  {:cite/id "sec-category"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"category\":\"Large accelerated filer\""
+   :cite/claim "The SEC filer category is Large accelerated filer."}
+  {:cite/id "sec-entity-type"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"entityType\":\"operating\""
+   :cite/claim "The SEC entity type is operating (not a shell or fund)."}
+  {:cite/id "sec-street"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"street1\":\"5660 NEW NORTHSIDE DRIVE,\""
+   :cite/claim "The SEC business address street is 5660 NEW NORTHSIDE DRIVE, (trailing comma in the source) -- the same Atlanta street GLEIF prints as the headquarters (row gleif-hq-address; see header wrinkle 1)."}
+  {:cite/id "sec-street2"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"street2\":\"THIRD FLOOR\""
+   :cite/claim "The SEC spells the floor THIRD FLOOR where GLEIF prints 3rd Floor. Same fact, per-source spellings (see header wrinkle 1)."}
+  {:cite/id "sec-city"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"city\":\"ATLANTA\""
+   :cite/claim "The SEC business address city is Atlanta -- not Wilmington (see header wrinkle 1)."}
+  {:cite/id "sec-zip"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"zipCode\":\"30328\""
+   :cite/claim "The SEC business address zip code is 30328 (Atlanta) -- the same code GLEIF prints for the headquarters."}
+  {:cite/id "sec-phone"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"phone\":\"770-857-4700\""
+   :cite/claim "The SEC business phone on record is 770-857-4700 (a Georgia area code)."}
+  {:cite/id "sec-lei-null"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"lei\":null"
+   :cite/claim "The SEC submissions record carries NO LEI. This row exists so a reader does not assume the SEC corroborates the LEI string; the GLEIF<->SEC join rests on name + DE + address + ticker (see header wrinkle 2)."}
+  {:cite/id "sec-ein-zeros"
+   :cite/authority :us-sec
+   :cite/row-kind :attribute
+   :cite/url "https://data.sec.gov/submissions/CIK0001571949.json"
+   :cite/expect-substring "\"ein\":\"000000000\""
+   :cite/claim "The SEC record prints an all-zeros EIN. Recorded because it is what the source answers; it identifies and corroborates nothing (see header wrinkle 3)."}
+  {:cite/id "issuer-title"
+   :cite/authority :issuer
+   :cite/row-kind :attribute
+   :cite/url "https://www.ice.com/terms-of-use"
+   :cite/expect-substring "<title>Terms of Use</title>"
+   :cite/claim "The issuer publishes its terms page at ice.com/terms-of-use -- the same URL archived in 80-data/public/tos.journal.edn. The title names no company, so this row is :attribute (see header)."}
+  {:cite/id "issuer-owner-delaware"
+   :cite/authority :issuer
+   :cite/row-kind :identity
+   :cite/url "https://www.ice.com/terms-of-use"
+   :cite/expect-substring "is owned and operated by Intercontinental Exchange, Inc., a Delaware corporation"
+   :cite/claim "The issuer's own terms name Intercontinental Exchange, Inc. as the Website's owner AND print 'a Delaware corporation' in the same sentence -- the issuer's independent statement of what GLEIF encodes as XTIQ/US-DE and the SEC as stateOfIncorporation DE."}
+  {:cite/id "issuer-website-family"
+   :cite/authority :issuer
+   :cite/row-kind :identity
+   :cite/url "https://www.ice.com/terms-of-use"
+   :cite/expect-substring "www.ice.com, www.nyse.com, www.intercontinentalexchange.com"
+   :cite/claim "The terms define the Website as www.ice.com, www.nyse.com and www.intercontinentalexchange.com in one breath -- the issuer's own print of the NYSE relationship (see the header NYSE fact)."}
+  {:cite/id "issuer-subsidiaries"
+   :cite/authority :issuer
+   :cite/row-kind :identity
+   :cite/url "https://www.ice.com/terms-of-use"
+   :cite/expect-substring "Intercontinental Exchange, Inc. and/or its subsidiaries"
+   :cite/claim "The agreement applies to websites operated by Intercontinental Exchange, Inc. and/or its subsidiaries -- the contracting-party sentence."}
+ ]}
